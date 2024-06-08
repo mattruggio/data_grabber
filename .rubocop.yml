@@ -3,3 +3,5 @@ AllCops:
   TargetRubyVersion: 3.2
   Exclude:
     - bin/*
+    - vendor/bundle/**/*
+    - tmp/*

@@ -1,0 +1,63 @@
+#!/usr/bin/env ruby
+# frozen_string_literal: true
+
+require 'fileutils'
+require 'dotenv/load'
+require 'yt'
+
+Yt.configure do |config|
+  config.api_key = ENV.fetch('YOUTUBE_API_KEY', nil)
+end
+
+channel_id = ARGV[0].to_s
+path = ARGV[1].to_s
+
+if channel_id.to_s.empty?
+  puts('Missing channel ID')
+  exit 1
+end
+
+yt_channel = Yt::Channel.new(id: channel_id)
+
+channel = {
+  id: yt_channel.id,
+  title: yt_channel.title,
+  playlists: []
+}
+
+yt_channel.playlists.each do |yt_playlist|
+  playlist = {
+    id: yt_playlist.id,
+    title: yt_playlist.title,
+    items: []
+  }
+
+  yt_playlist.playlist_items.each do |yt_item|
+    video = yt_item.video
+
+    item = {
+      id: yt_item.id,
+      title: yt_item.title,
+      position: yt_item.position,
+      video: {
+        id: video.id,
+        title: video.title,
+        tags: video.tags,
+        thumbnail_url: video.thumbnail_url
+      }
+    }
+
+    playlist[:items] << item
+  end
+
+  channel[:playlists] << playlist
+end
+
+if path.to_s.empty?
+  puts(channel.to_json)
+else
+  dir = File.dirname(path)
+
+  FileUtils.mkdir_p(dir)
+  File.write(path, channel.to_json)
+end
